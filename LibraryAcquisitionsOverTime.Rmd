@@ -1,0 +1,84 @@
+---
+title: "Library Acquisitions Over Time"
+author: "Marie Jordan"
+output: pdf_document
+---
+
+```{r include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(scales)
+```
+# Data Source
+
+All datasets were downloaded from the IMLS website on 7/30/2019.
+
+https://www.imls.gov/research-evaluation/data-collection/public-libraries-survey
+
+Relevant context from IMLS:
+
+Coverage: The data are collected from approximately 9,000 public libraries with approximately 17,000 individual public library outlets (main libraries, branches, and bookmobiles) in the 50 states, the District of Columbia, and outlying territories.
+
+Methods: At the state level, PLS is administered by Data Coordinators, appointed by the chief officer of the state library agency from each state or outlying area. State Data Coordinators collect the requested data from local public libraries and report these data to us via a web-based reporting system.
+
+Further documentation is available with each dataset.
+
+```{r include=FALSE}
+fy2017 <- read_csv('PLS_FY2017_Data_Files_CSV/PLS_FY17_AE_pud17i.csv')
+fy2016 <- read_csv('pls_fy2016_data_files_csv/PLS_FY2016_AE_pupld16a_updated.csv')
+```
+
+```{r include=FALSE}
+fy2017_sm <- subset(fy2017,select=c('PRMATEXP','ELMATEXP','OTHMATEX','TOTEXPCO'))
+fy2016_sm <- subset(fy2016, select=c('PRMATEXP','ELMATEXP','OTHMATEX','TOTEXPCO'))
+```
+
+```{r include=FALSE}
+fy2017_sm$YEAR <- '2017'
+fy2016_sm$YEAR <- '2016'
+```
+
+```{r include=FALSE}
+fy_comp <- rbind(fy2017_sm,fy2016_sm)
+```
+
+
+
+```{r include=FALSE}
+fy_comp_sum <- fy_comp %>% 
+        group_by(YEAR) %>% 
+        summarise(total_print = sum(PRMATEXP),total_electronic = sum(ELMATEXP),total_other=sum(OTHMATEX))
+```
+
+```{r include=FALSE}
+fy_comp_sum$total_print <- fy_comp_sum$total_print / 100000000
+fy_comp_sum$total_electronic <- fy_comp_sum$total_electronic / 100000000
+fy_comp_sum$total_other <- fy_comp_sum$total_other / 100000000
+```
+
+```{r include=FALSE}
+fy_comp_sum$YEAR <- as.integer(fy_comp_sum$YEAR)
+
+```
+# Total Expenditures By Year
+```{r echo=FALSE}
+print(fy_comp_sum)
+```
+Note that numbers are in millions, e.g. in 2016, 7.5 million dollars went to print
+expenditures.
+
+```{r echo=FALSE}
+ggplot(fy_comp_sum,aes(YEAR,total_print,color='Print Total Expenditure'))+
+  geom_line()+
+  geom_line(data=fy_comp_sum, aes(YEAR,total_electronic,color='Electronic Total Expenditure'))+
+  geom_line(data=fy_comp_sum, aes(YEAR,total_other,color='Other Total Expenditure')) +
+  labs(title="Collection Expenditures")+
+  labs(x = "Year", y = "Sum of Expenditure (in millions)")+
+  scale_color_manual(values = c('Print Total Expenditure' = 'black',
+    'Electronic Total Expenditure' = '#c89fe0', 'Other Total Expenditure'='#308025'))
+```
+
+
+
+
